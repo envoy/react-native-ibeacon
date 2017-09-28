@@ -1,7 +1,9 @@
 #import <Foundation/Foundation.h>
 
 #import <React/RCTBridgeModule.h>
+#import <React/RCTEventEmitter.h>
 
-@interface RCTBeaconManager : NSObject <RCTBridgeModule>
+@interface RCTBeaconManager : RCTEventEmitter <RCTBridgeModule>
 
 @end
+

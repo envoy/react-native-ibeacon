@@ -1,8 +1,12 @@
-import { NativeModules } from 'react-native';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 const { BeaconManager } = NativeModules;
+export const StatusUpdateEvent = 'StatusUpdate';
 export default class Beacon {
-    // FIXME:
-    hello() {
-        return BeaconManager.hello();
+    static startAdvertising(uuid, major, minor, identifier) {
+        return BeaconManager.startAdvertising(uuid, major, minor, identifier);
+    }
+    static stopAdvertising() {
+        BeaconManager.stopAdvertising();
     }
 }
+Beacon.emitter = new NativeEventEmitter(BeaconManager);
