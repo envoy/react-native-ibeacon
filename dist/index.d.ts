@@ -5,4 +5,5 @@ export default class Beacon {
     static emitter: NativeEventEmitter;
     static startAdvertising(uuid: string, major: number, minor: number, identifier: any): any;
     static stopAdvertising(): void;
+    static currentStatus(): Promise<Status>;
 }

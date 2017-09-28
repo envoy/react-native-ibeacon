@@ -14,6 +14,7 @@ NSString * const kStatusUpdateEvent = @"StatusUpdate";
 @implementation RCTBeaconManager {
     CBPeripheralManager *peripheralManager;
     NSMutableArray<CLBeaconRegion *> *regions;
+    BOOL advertiseWhenReady;
 }
 
 - (instancetype)init
@@ -22,6 +23,7 @@ NSString * const kStatusUpdateEvent = @"StatusUpdate";
     if (self) {
         peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options:@{CBCentralManagerOptionShowPowerAlertKey : @NO}];
         regions = [NSMutableArray array];
+        advertiseWhenReady = NO;
     }
     return self;
 }
@@ -33,37 +35,48 @@ NSString * const kStatusUpdateEvent = @"StatusUpdate";
 RCT_EXPORT_MODULE()
 
 RCT_REMAP_METHOD(startAdvertising,
-                 startAdvertisingWithRegionUUID:(NSString *)uuid
-                 major:(NSNumber *)major
-                 minor:(NSNumber *)minor
-                 identifier: (NSString *)identifier
-                 ) {
+                 startAdvertisingWithRegionUUID:(NSString * _Nonnull)uuid
+                 major:(NSNumber * _Nonnull)major
+                 minor:(NSNumber * _Nonnull)minor
+                 identifier:(NSString * _Nonnull)identifier
+) {
     UInt16 uint16Major = [major unsignedIntegerValue];
     UInt16 uint16Minor = [minor unsignedIntegerValue];
     NSUUID *regionUUID = [[NSUUID alloc] initWithUUIDString:uuid];
     CLBeaconRegion *region = [[CLBeaconRegion alloc] initWithProximityUUID:regionUUID major:uint16Major minor:uint16Minor identifier:identifier];
     [regions addObject:region];
+    advertiseWhenReady = YES;
+    [self startAdvertisingWhenPossible];
 }
 
 RCT_EXPORT_METHOD(stopAdvertising) {
+    advertiseWhenReady = NO;
     [peripheralManager stopAdvertising];
     [regions removeAllObjects];
 }
 
-- (void)startAdvertisingWhenPossible {
-    if(peripheralManager.state == CBPeripheralManagerStatePoweredOn) {
+RCT_REMAP_METHOD(currentStatus,
+                 currentStatusWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject
+) {
+    resolve([RCTBeaconManager stringForBeaconStatus:peripheralManager.state]);
+}
 
+- (void)startAdvertisingWhenPossible {
+    if(peripheralManager.state != CBPeripheralManagerStatePoweredOn) {
+        return;
+    }
+    for (CLBeaconRegion *region in regions) {
+        [peripheralManager startAdvertising:[region peripheralDataWithMeasuredPower:nil]];
     }
 }
 
 #pragma mark - Periphial Manager Delegate
 
-- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
-    NSString *status = [RCTBeaconManager stringForBeaconStatus:peripheral.state];
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager * _Nonnull)peripheral {
+    NSString * _Nonnull status = [RCTBeaconManager stringForBeaconStatus:peripheral.state];
     [self sendEventWithName:kStatusUpdateEvent body:@{@"status": status}];
-    if (peripheral.state == CBPeripheralManagerStatePoweredOn) {
-        // TODO: start broadcast here?
-    }
+    [self startAdvertisingWhenPossible];
 }
 
 + (NSString *)stringForBeaconStatus:(CBManagerState)state {

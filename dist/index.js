@@ -8,5 +8,8 @@ export default class Beacon {
     static stopAdvertising() {
         BeaconManager.stopAdvertising();
     }
+    static currentStatus() {
+        return BeaconManager.currentStatus();
+    }
 }
 Beacon.emitter = new NativeEventEmitter(BeaconManager);

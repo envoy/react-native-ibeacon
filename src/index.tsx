@@ -26,4 +26,8 @@ export default class Beacon {
   static stopAdvertising () {
     BeaconManager.stopAdvertising()
   }
+
+  static currentStatus (): Promise<Status> {
+    return BeaconManager.currentStatus()
+  }
 }
