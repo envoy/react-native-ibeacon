@@ -76,3 +76,5 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
+
+.DS_Store
