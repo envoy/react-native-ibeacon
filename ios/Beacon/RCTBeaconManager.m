@@ -98,7 +98,7 @@ RCT_REMAP_METHOD(currentStatus,
 }
 
 + (BOOL)requiresMainQueueSetup {
-    return NO;
+    return YES;
 }
 
 @end
